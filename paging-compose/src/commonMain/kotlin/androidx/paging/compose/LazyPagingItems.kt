@@ -54,9 +54,14 @@ import kotlinx.coroutines.withContext
 public class LazyPagingItems<T : Any>
 internal constructor(
     /** the [Flow] object which contains a stream of [PagingData] elements. */
-    private val flow: Flow<PagingData<T>>
+    private val flow: Flow<PagingData<T>>,
+    /**
+     * Custom dispatcher to use for main operations. If null, defaults to uiDispatcher.
+     * This dispatcher will be used as the main context for the PagingDataPresenter.
+     */
+    private val mainUiDispatcher: CoroutineContext? = null
 ) {
-    private val mainDispatcher = uiDispatcher
+    private val mainDispatcher = this.mainUiDispatcher ?: uiDispatcher
 
     /**
      * If the [flow] is a SharedFlow, it is expected to be the flow returned by from
@@ -188,7 +193,7 @@ public fun <T : Any> Flow<PagingData<T>>.collectAsLazyPagingItems(
     context: CoroutineContext = EmptyCoroutineContext
 ): LazyPagingItems<T> {
 
-    val lazyPagingItems = remember(this) { LazyPagingItems(this) }
+    val lazyPagingItems = remember(this) { LazyPagingItems(this,context) }
 
     LaunchedEffect(lazyPagingItems) {
         if (context == EmptyCoroutineContext) {
