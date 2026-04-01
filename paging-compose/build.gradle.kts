@@ -4,14 +4,12 @@ plugins {
     kotlin("multiplatform")
     alias(libs.plugins.composeCompiler)
     id("org.jetbrains.compose") // Add this
+    `maven-publish`
 }
 
 kotlin {
-    // 1. Объявляем таргеты вручную (замена androidXMultiplatform)
-    androidTarget {
-        publishLibraryVariants("release")
-    }
-    jvm("desktop") // Desktop (JVM)
+    androidTarget { publishLibraryVariants("release") }
+    jvm("desktop")
 
     // Apple
     iosX64(); iosArm64(); iosSimulatorArm64()
@@ -19,46 +17,41 @@ kotlin {
     watchosX64(); watchosArm64(); watchosSimulatorArm64()
     tvosX64(); tvosArm64(); tvosSimulatorArm64()
 
-    // Other
+    // Linux
     linuxX64()
+    linuxArm64() // Добавили ARM64
 
-
-
-    // 2. Настройка SourceSets
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(project(":paging-common"))
-                // Используйте зависимости из вашего libs.versions.toml если они там есть
                 api(compose.runtime)
             }
         }
 
-        val commonTest by getting {
-            dependencies {
-                // Если internal-testutils-paging не переписан под стандартный KMP,
-                // он может вызвать ошибки компиляции
-                //implementation(project(":internal-testutils-paging"))
-            }
-        }
-
-        val androidMain by getting {
-            dependencies {
-                implementation("androidx.compose.ui:ui:1.7.0")
-            }
-        }
-
-        // Создаем иерархию nonAndroidMain
+        // Базовый слой для всего, что не Android
         val nonAndroidMain by creating {
             dependsOn(commonMain)
         }
 
+        // Общий слой для Linux (x64 + Arm64)
+        val linuxMain by creating {
+            dependsOn(nonAndroidMain)
+        }
+
+        // Привязываем конкретные линуксы к общему linuxMain
+        val linuxX64Main by getting { dependsOn(linuxMain) }
+        val linuxArm64Main by getting { dependsOn(linuxMain) }
+
         val desktopMain by getting { dependsOn(nonAndroidMain) }
+        val androidMain by getting { /* зависимости уже есть */ }
 
+        // Связываем Apple таргеты с nonAndroidMain (опционально, если нужно)
+        val appleMain by creating {
+            dependsOn(nonAndroidMain)
+        }
+        // В Kotlin 1.9.20+ iosMain, macosMain и т.д. создаются автоматически,
 
-
-        // Привязываем остальные таргеты к nonJvmMain (упрощенно)
-        // В Kotlin 1.9.20+ большая часть иерархии строится автоматически
     }
 }
 

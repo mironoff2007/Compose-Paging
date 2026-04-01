@@ -25,6 +25,8 @@ kotlin {
 
     // Desktop / Web
     linuxX64()
+    linuxArm64() // Добавляем ARM64
+
     mingwX64()
     js(IR) { browser() }
     wasmJs() { browser() }
@@ -62,6 +64,19 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:atomicfu:0.23.1")
             }
         }
+
+        val linuxMain by creating {
+            dependsOn(nonJvmMain) // Указываем зависимость от вашего nonJvmMain
+        }
+
+        // Связываем конкретные таргеты с общим linuxMain
+        val linuxX64Main by getting {
+            dependsOn(linuxMain)
+        }
+        val linuxArm64Main by getting {
+            dependsOn(linuxMain)
+        }
+
 
         // Настройка иерархии для Native (Unix, Apple и т.д.)
         // В новых версиях Kotlin (1.9+) иерархия создается автоматически (Default Hierarchy Template)
