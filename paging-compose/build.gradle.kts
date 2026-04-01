@@ -11,11 +11,13 @@ kotlin {
     androidTarget { publishLibraryVariants("release") }
     jvm("desktop")
 
-    // Apple
+    // Apple\
+    /*
     iosX64(); iosArm64(); iosSimulatorArm64()
     macosX64(); macosArm64()
     watchosX64(); watchosArm64(); watchosSimulatorArm64()
     tvosX64(); tvosArm64(); tvosSimulatorArm64()
+    */
 
     // Linux
     linuxX64()
@@ -26,6 +28,14 @@ kotlin {
             dependencies {
                 api(project(":paging-common"))
                 api(compose.runtime)
+            }
+        }
+
+        val androidMain by getting {
+            dependsOn(commonMain)
+            dependencies {
+                // This is required for AndroidUiDispatcher
+                implementation("androidx.compose.ui:ui:1.7.0")
             }
         }
 
@@ -44,12 +54,9 @@ kotlin {
         val linuxArm64Main by getting { dependsOn(linuxMain) }
 
         val desktopMain by getting { dependsOn(nonAndroidMain) }
-        val androidMain by getting { /* зависимости уже есть */ }
 
         // Связываем Apple таргеты с nonAndroidMain (опционально, если нужно)
-        val appleMain by creating {
-            dependsOn(nonAndroidMain)
-        }
+        //val appleMain by creating { dependsOn(nonAndroidMain) }
         // В Kotlin 1.9.20+ iosMain, macosMain и т.д. создаются автоматически,
 
     }
@@ -62,6 +69,15 @@ android {
 
     defaultConfig {
         minSdk = 21
+    }
+}
+
+group = project.property("GROUP") as String
+version = project.property("VERSION_NAME") as String
+// Настройка публикации в Maven
+publishing {
+    repositories {
+        mavenLocal()
     }
 }
 

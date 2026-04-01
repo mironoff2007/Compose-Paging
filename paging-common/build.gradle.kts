@@ -1,6 +1,7 @@
 plugins {
     kotlin("multiplatform") version "2.3.20" // используйте вашу версию
     id("com.android.library") version "8.11.2"
+    `maven-publish`
 }
 
 kotlin {
@@ -11,25 +12,25 @@ kotlin {
     jvm("desktop")
 
     // Apple / Native
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-    watchosX64()
-    watchosArm64()
-    watchosSimulatorArm64()
-    tvosX64()
-    tvosArm64()
-    tvosSimulatorArm64()
-    macosX64()
-    macosArm64()
+    //iosX64()
+    //iosArm64()
+    //iosSimulatorArm64()
+    //watchosX64()
+    //watchosArm64()
+    //watchosSimulatorArm64()
+    ///tvosX64()
+    //tvosArm64()
+    //tvosSimulatorArm64()
+    //macosX64()
+    //macosArm64()
 
     // Desktop / Web
     linuxX64()
     linuxArm64() // Добавляем ARM64
 
-    mingwX64()
-    js(IR) { browser() }
-    wasmJs() { browser() }
+    //mingwX64()
+    //js(IR) { browser() }
+    //wasmJs() { browser() }
 
     sourceSets {
         val commonMain by getting {
@@ -39,25 +40,7 @@ kotlin {
             }
         }
 
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
-            }
-        }
-
-        // Аналог jvmAndAndroid
-        val jvmAndAndroidMain = create("jvmAndAndroidMain") {
-            dependsOn(commonMain)
-            dependencies {
-                api("androidx.arch.core:core-common:2.2.0")
-            }
-        }
-
-        val androidMain by getting { dependsOn(jvmAndAndroidMain) }
-        val desktopMain by getting { dependsOn(jvmAndAndroidMain) }
-
-        // Native / Non-JVM
+        // 1. Общий слой для всего, что не JVM (Native, JS и т.д.)
         val nonJvmMain by creating {
             dependsOn(commonMain)
             dependencies {
@@ -65,21 +48,27 @@ kotlin {
             }
         }
 
+        val nativeMain by creating {
+            dependsOn(nonJvmMain)
+        }
+
+        // Link Linux targets to nativeMain
         val linuxMain by creating {
-            dependsOn(nonJvmMain) // Указываем зависимость от вашего nonJvmMain
+            dependsOn(nativeMain)
         }
 
-        // Связываем конкретные таргеты с общим linuxMain
-        val linuxX64Main by getting {
-            dependsOn(linuxMain)
-        }
-        val linuxArm64Main by getting {
-            dependsOn(linuxMain)
-        }
+        val linuxX64Main by getting { dependsOn(linuxMain) }
+        val linuxArm64Main by getting { dependsOn(linuxMain) }
 
-
-        // Настройка иерархии для Native (Unix, Apple и т.д.)
-        // В новых версиях Kotlin (1.9+) иерархия создается автоматически (Default Hierarchy Template)
+        // JVM / Android
+        val jvmAndAndroidMain = create("jvmAndAndroidMain") {
+            dependsOn(commonMain)
+            dependencies {
+                api("androidx.arch.core:core-common:2.2.0")
+            }
+        }
+        val androidMain by getting { dependsOn(jvmAndAndroidMain) }
+        val desktopMain by getting { dependsOn(jvmAndAndroidMain) }
     }
 }
 
@@ -89,4 +78,14 @@ android {
     defaultConfig {
         minSdk = 21
     }
+}
+
+group = project.property("GROUP") as String
+version = project.property("VERSION_NAME") as String
+
+// Настройка публикации в Maven
+publishing {
+        repositories {
+            mavenLocal()
+        }
 }
